@@ -17,6 +17,8 @@ resource "aws_s3_bucket_public_access_block" "public_access" {
 
   block_public_acls       = false
   block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
 }
 
 resource "aws_s3_bucket_acl" "acl" {
@@ -29,10 +31,10 @@ resource "aws_s3_bucket_acl" "acl" {
   acl    = "public-read"
 }
 
-resource "aws_s3_bucket_accelerate_configuration" "config" {
-  bucket = aws_s3_bucket.website_bucket.id
-  status = "Enabled"
-}
+# resource "aws_s3_bucket_accelerate_configuration" "config" {
+#   bucket = aws_s3_bucket.website_bucket.id
+#   status = "Enabled"
+# }
 
 
 # resource "aws_s3_bucket_policy" "allow_access" {
@@ -81,7 +83,7 @@ resource "aws_s3_bucket_accelerate_configuration" "config" {
 
 
 resource "aws_s3_bucket_website_configuration" "example" {
-  bucket = aws_s3_bucket.example.id
+  bucket = aws_s3_bucket.website_bucket.id
 
   index_document {
     suffix = "index.html"
@@ -91,29 +93,28 @@ resource "aws_s3_bucket_website_configuration" "example" {
   }
 }
 
-resource "aws_s3_bucket_object" "index" {
-  depends_on = [aws_s3_bucket.website_bucket]
-  bucket = aws_s3_bucket.website_bucket        #not sure
+resource "aws_s3_object" "index" {
+  depends_on = [aws_s3_bucket_acl.acl]
+  bucket = aws_s3_bucket.website_bucket.id       #not sure
   key    = "index.html"
   source = "index.html"
   acl    = "public-read"
+  content_type = "text/html"
 }
 
-resource "aws_s3_bucket_object" "error" {
-  depends_on = [aws_s3_bucket.website_bucket]
-  bucket = aws_s3_bucket.website_bucket     
+resource "aws_s3_object" "error" {
+  depends_on = [aws_s3_bucket_acl.acl]
+  bucket = aws_s3_bucket.website_bucket.id     
   key    = "error.html"
   source = "error.html"
   acl    = "public-read"
+  content_type = "text/html"
 }
 
-resource "aws_route53_zone" "main" {
-  name = var.domain_name
-}
 
-resource "aws_route53_record" "website_record" {
-  zone_id = aws_route53_zone.main.zone_id
-  name    = var.subdomain_name
-  type    = "NS"
-  ttl     = "30"
-} 
+# resource "aws_route53_record" "website_record" {
+#   zone_id = aws_route53_zone.main.zone_id
+#   name    = var.subdomain_name
+#   type    = "NS"
+#   ttl     = "30"
+# } 
